@@ -21,7 +21,7 @@ log_save_tb: true
 save_video: true
 device: cuda
 # observation
-image_size: 84
+image_size: 128
 image_pad: 4
 frame_stack: 3
 # global params

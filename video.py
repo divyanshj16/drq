@@ -8,7 +8,7 @@ import utils
 
 
 class VideoRecorder(object):
-    def __init__(self, root_dir, height=256, width=256, fps=10):
+    def __init__(self, root_dir, height=256, width=256, fps=30):
         self.save_dir = utils.make_dir(root_dir, 'video') if root_dir else None
         self.height = height
         self.width = width
@@ -19,12 +19,15 @@ class VideoRecorder(object):
         self.frames = []
         self.enabled = self.save_dir is not None and enabled
 
-    def record(self, env):
+    def record(self, frame):
+
         if self.enabled:
-            frame = env.render(mode='rgb_array',
-                               height=self.height,
-                               width=self.width)
-            self.frames.append(frame)
+            # frame = env.render()
+            # frame = env.render(mode='rgb_array',
+            #                    height=self.height,
+            #                    width=self.width)
+            # we dont want to render again, so I use the last observation value.
+            self.frames.append(frame.transpose(1,2,0)[..., -3:])
 
     def save(self, file_name):
         if self.enabled:

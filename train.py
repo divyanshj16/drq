@@ -16,6 +16,12 @@ import utils
 from logger import Logger
 from replay_buffer import ReplayBuffer
 from video import VideoRecorder
+import robosuite as suite
+from robosuite.renderers.igibson.igibson_wrapper import iGibsonWrapper
+from robosuite.wrappers import GymWrapper
+import robosuite.utils.macros as macros
+
+macros.IMAGE_CONVENTION = "opencv"
 
 torch.backends.cudnn.benchmark = True
 
@@ -35,15 +41,63 @@ def make_env(cfg):
     # per dreamer: https://github.com/danijar/dreamer/blob/02f0210f5991c7710826ca7881f19c64a012290c/wrappers.py#L26
     camera_id = 2 if domain_name == 'quadruped' else 0
 
-    env = dmc2gym.make(domain_name=domain_name,
-                       task_name=task_name,
-                       seed=cfg.seed,
-                       visualize_reward=False,
-                       from_pixels=True,
-                       height=cfg.image_size,
-                       width=cfg.image_size,
-                       frame_skip=cfg.action_repeat,
-                       camera_id=camera_id)
+    # Deafult
+    # env = dmc2gym.make(domain_name=domain_name,
+    #                    task_name=task_name,
+    #                    seed=cfg.seed,
+    #                    visualize_reward=False,
+    #                    from_pixels=True,
+    #                    height=cfg.image_size,
+    #                    width=cfg.image_size,
+    #                    frame_skip=cfg.action_repeat,
+    #                    camera_id=camera_id)
+
+    # iGibson
+    # env = GymWrapper(iGibsonWrapper(
+    #     suite.make(
+    #             "Door",
+    #             robots = ["IIWA"],
+    #             reward_shaping=True,
+    #             has_renderer=False,           
+    #             has_offscreen_renderer=True,
+    #             ignore_done=True,
+    #             use_object_obs=False,
+    #             use_camera_obs=True,  
+    #             render_camera='frontview',
+    #             control_freq=20, 
+    #             camera_names=['frontview'],
+    #             render_with_igibson=True
+    #         ),
+    #         enable_pbr=True,
+    #         enable_shadow=True,
+    #         modes=('rgb',), #, 'seg', '3d', 'normal'),
+    #         render2tensor=False,
+    #         optimized=False,
+    # ))
+
+    # Vanilla robosuite.
+    env = GymWrapper(
+        suite.make(
+                "Door",
+                robots = ["IIWA"],
+                reward_shaping=True,
+                has_renderer=False,           
+                has_offscreen_renderer=True,
+                ignore_done=False,
+                use_object_obs=True,
+                use_camera_obs=True,  
+                render_camera='frontview',
+                control_freq=20, 
+                camera_names=['agentview'],
+                camera_heights=cfg.image_size,
+                camera_widths=cfg.image_size,
+                render_with_igibson=False
+            ),
+            keys=['agentview_image']
+    )    
+    
+
+    env._max_episode_steps = 250
 
     env = utils.FrameStack(env, k=cfg.frame_stack)
 
@@ -100,7 +154,7 @@ class Workspace(object):
                 with utils.eval_mode(self.agent):
                     action = self.agent.act(obs, sample=False)
                 obs, reward, done, info = self.env.step(action)
-                self.video_recorder.record(self.env)
+                self.video_recorder.record(obs)
                 episode_reward += reward
                 episode_step += 1
 
@@ -153,7 +207,7 @@ class Workspace(object):
                                       self.step)
 
             next_obs, reward, done, info = self.env.step(action)
-
+    
             # allow infinite bootstrap
             done = float(done)
             done_no_max = 0 if episode_step + 1 == self.env._max_episode_steps else done

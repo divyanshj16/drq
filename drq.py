@@ -29,7 +29,8 @@ class Encoder(nn.Module):
         ])
 
         self.head = nn.Sequential(
-            nn.Linear(self.num_filters * 35 * 35, self.feature_dim),
+            # nn.Linear(self.num_filters * 35 * 35, self.feature_dim), # for image size 84
+            nn.Linear(self.num_filters * 57 * 57, self.feature_dim),  # for image size 128
             nn.LayerNorm(self.feature_dim))
 
         self.outputs = dict()
