@@ -54,31 +54,35 @@ def make_env(cfg):
 
     # iGibson
     # env = GymWrapper(iGibsonWrapper(
-    #     suite.make(
-    #             "Door",
-    #             robots = ["IIWA"],
-    #             reward_shaping=True,
-    #             has_renderer=False,           
-    #             has_offscreen_renderer=True,
-    #             ignore_done=True,
-    #             use_object_obs=False,
-    #             use_camera_obs=True,  
-    #             render_camera='frontview',
-    #             control_freq=20, 
-    #             camera_names=['frontview'],
-    #             render_with_igibson=True
-    #         ),
-    #         enable_pbr=True,
-    #         enable_shadow=True,
-    #         modes=('rgb',), #, 'seg', '3d', 'normal'),
-    #         render2tensor=False,
-    #         optimized=False,
-    # ))
+    #                     suite.make(
+    #                             "Lift",
+    #                             robots = ["IIWA"],
+    #                             reward_shaping=True,
+    #                             has_renderer=False,           
+    #                             has_offscreen_renderer=True,
+    #                             ignore_done=False,
+    #                             use_object_obs=False,
+    #                             use_camera_obs=True,  
+    #                             render_camera='frontview',
+    #                             control_freq=20, 
+    #                             camera_names=['agentview'],
+    #                             render_with_igibson=True
+    #                         ),
+    #                     enable_pbr=True,
+    #                     enable_shadow=True,
+    #                     modes=('rgb',), #, 'seg', '3d', 'normal'),
+    #                     render2tensor=False,
+    #                     optimized=False,
+    #                     width=cfg.image_size,
+    #                     height=cfg.image_size
+    #                 ),
+    # keys=['agentview_image']
+    # )
 
     # Vanilla robosuite.
     env = GymWrapper(
         suite.make(
-                "Door",
+                "Lift",
                 robots = ["IIWA"],
                 reward_shaping=True,
                 has_renderer=False,           
@@ -143,6 +147,7 @@ class Workspace(object):
         self.step = 0
 
     def evaluate(self):
+        # import pdb; pdb.set_trace();
         average_episode_reward = 0
         for episode in range(self.cfg.num_eval_episodes):
             obs = self.env.reset()
